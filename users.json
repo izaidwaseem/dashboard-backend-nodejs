@@ -1,0 +1,38 @@
+[
+  {
+    "id": 0,
+    "name": "zaid butt",
+    "age": 21,
+    "email": "zaidwaseem550@gamil.com",
+    "password": "$2b$10$EJx5/1Mt6f14kYKUWmPVJug6WxMSwXzdVsIkb4gpIitpWhe3Z44R2",
+    "CNIC": "35202-0282779-9",
+    "phone": "0315-4052050"
+  },
+  {
+    "id": 1,
+    "name": "zaid waseem",
+    "age": 21,
+    "email": "zaidwaseem550@gamil.com",
+    "password": "$2b$10$YWfWIG9l7yZsV9j60EZdY.mCF3SBtyLKaE52lAffYO8Hrs1K.Fyzq",
+    "CNIC": "35202-0282779-9",
+    "phone": "0315-4052050"
+  },
+  {
+    "id": 2,
+    "name": "shahrukh khan",
+    "age": 57,
+    "email": "kingkhan@redchillies.com",
+    "password": "$2b$10$JEaF2uS4PY.3W.N3ZwQ3K.spWErpxNFbKTcg3EBkeW7NIVmq7C79G",
+    "CNIC": "35202-0282779-9",
+    "phone": "0315-4052050"
+  },
+  {
+    "id": 3,
+    "name": "babar azam",
+    "age": 28,
+    "email": "bobby@odiking.com",
+    "password": "$2b$10$o18CiOnj9cQnEKedfPSLqeW02m4Ktnq1.7ZYg4y48zu2ln9nwtPIW",
+    "CNIC": "35202-0282779-9",
+    "phone": "0315-4052050"
+  }
+]
