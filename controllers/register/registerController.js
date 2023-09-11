@@ -1,7 +1,5 @@
 const path = require('path');
 const multer  = require('multer')
-const sequelize = require('../../util/database')
-const User = require('../../models/users');
 const Registeration = require('../../models/registeration');
 const nodemailer = require("nodemailer");
 const { Op } = require('sequelize'); 
@@ -33,6 +31,16 @@ const upload = multer({
     }
 }).single('CV');
 
+const findUserById = async (userId) => {
+    try {
+        const user = await Registeration.findByPk(userId);
+        return user;
+    } catch (error) {
+        console.error('Error finding user by ID:', error);
+        res.status(500).send('An error occurred while finding user by ID.');
+    }
+};
+
 
 exports.registerUser = async (req, res) => {
     try {
@@ -60,7 +68,7 @@ exports.registerUser = async (req, res) => {
                 return res.status(400).send('Error: CV file is required.');
             }
 
-            newRegistration.CV = req.file.path; // Set the CV field to the file path
+            newRegistration.CV = req.file.path; 
             await Registeration.create(newRegistration);
 
             res.send({ success: true, msg: `${newRegistration.firstName} added successfully!` });
@@ -71,14 +79,10 @@ exports.registerUser = async (req, res) => {
     }
 };
 
-
-
 exports.sendMail = async (req, res) => {
     try {
         const userId = req.params.id;
-        const user = await Registeration.findByPk(userId);
-
-        console.log("user", user);
+        const user = await findUserById(userId);
 
         if (!user) {
             return res.status(404).send("User with this ID does not exist");
@@ -87,32 +91,93 @@ exports.sendMail = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'Gmail',
             auth: {
-                user: 'zaidwaseem9669@gmail.com', // Your Gmail email address
-                pass: 'sdbbjmsbvghkxtnz' // Your Gmail password or an app-specific password
+                user: 'zaidwaseem9669@gmail.com',
+                pass: 'sdbbjmsbvghkxtnz'
             }
         });
 
         let mailOptions;
+        let subject;
+        let emailContent;
 
-        if (user.flag) {
-            // If the flag is true, send a success email template
-            mailOptions = {
-                from: 'zaidwaseem9669@gmail.com', // Sender's email address
-                to: user.email, // User's email address
-                subject: 'Registration Success',
-                text: 'Congratulations! Your registration was successful.'
-            };
-        } else {
-            // If the flag is false, send an alternate email template
-            mailOptions = {
-                from: 'zaidwaseem9669@gmail.com',
-                to: user.email,
-                subject: 'Registration Incomplete',
-                text: 'Your registration is incomplete. Please complete the registration process.'
-            };
+        if (user.flag === 'true') {
+            // If the flag is true, prepare a success email template
+            subject = 'Congratulations buddy';
+            emailContent = `
+                <html>
+                <head>
+                    <style>
+                        /* Inline CSS styles for the email */
+                        body {
+                            font-family: Arial, sans-serif;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 20px;
+                            background-color: #f7f7f7;
+                            border-radius: 10px;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>Congratulations!</h1>
+                        </div>
+                        <p>Dear Candidate,</p>
+                        <p>Your CV has been approved. We are excited to have you on board.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+        } else if (user.flag === 'false') {
+            // If the flag is false, prepare a rejection email template
+            subject = 'Bad Scene';
+            emailContent = `
+                <html>
+                <head>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 20px;
+                            background-color: #f7f7f7;
+                            border-radius: 10px;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>Sorry...</h1>
+                        </div>
+                        <p>Dear Candidate,</p>
+                        <p>Unfortunately, your CV has been rejected. Don't worry, keep improving and applying.</p>
+                    </div>
+                </body>
+                </html>
+            `;
         }
-
         // Send the email
+        mailOptions = {
+            from: 'zaidwaseem9669@gmail.com',
+            to: user.email,
+            subject: subject,
+            html: emailContent
+        };
+
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
                 console.error('Error sending email:', error);
@@ -129,37 +194,50 @@ exports.sendMail = async (req, res) => {
 };
 
 
+
 exports.downloadCV = async (req, res) => {
-    const userId = req.params.id;
-    const user = await Registeration.findByPk(userId);
+    try {
+        const userId = req.params.id;
+        const user = await findUserById(userId);
 
-    if (!user){
-        res.send("User with this ID does not exist!")
-    }
-    console.log(user.CV);
-    const filePath = path.join(__dirname, '../../', user.CV); // Path to the file to download
-    const fileName = 'sample.pdf'; 
-
-    res.download(filePath, fileName, (err) => {
-        if (err) {
-            console.error('Error downloading file:', err);
-            res.status(500).send('An error occurred while downloading the file.');
+        if (!user) {
+            return res.status(404).send("User with this ID does not exist!");
         }
-    });
-}
+
+        if (!user.CV) {
+            return res.status(400).send("User does not have a CV file.");
+        }
+
+        const filePath = path.join(__dirname, '../../', user.CV); // Path to the file to download
+        const fileName = 'sample.pdf'; 
+
+        res.download(filePath, fileName, (err) => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                res.status(500).send('An error occurred while downloading the file.');
+            }
+        });
+    } catch (error) {
+        console.error('Error downloading CV:', error);
+        res.status(500).send('An error occurred while downloading the CV.');
+    }
+};
 
 
 exports.displayUsers = async (req, res) => {
-    // console.log("testing");
     try {
         const page = req.query.page || 1;
         const perPage = 10;
         const searchKey = req.query.search;
+        const filter = req.query.filter;
+        const ageFilter = req.query.age;
+        const genderFilter = req.query.gender;
 
-        let whereClause = {}; 
+        let whereClause = {};
+        let filterClause = {};
 
         if (searchKey) {
-            // If search query is provided, search by firstName and email
+            // If search query is provided, search by firstName, lastName, and email
             whereClause = {
                 [Op.or]: [
                     { firstName: { [Op.like]: `%${searchKey}%` } },
@@ -169,8 +247,23 @@ exports.displayUsers = async (req, res) => {
             };
         }
 
+        if (filter) {
+            filterClause.flag = filter; 
+        }
+
+        if (ageFilter) {
+            filterClause.age = ageFilter;
+        }
+
+        if (genderFilter) {
+            filterClause.gender = genderFilter;
+        }
+
         const users = await Registeration.findAll({
-            where: whereClause, 
+            where: {
+                ...whereClause,
+                ...filterClause 
+            },
             limit: perPage,
             offset: (page - 1) * perPage,
         });
@@ -180,4 +273,5 @@ exports.displayUsers = async (req, res) => {
         console.error('Error fetching users:', error);
         res.status(500).send('An error occurred while fetching users.');
     }
-}
+};
+

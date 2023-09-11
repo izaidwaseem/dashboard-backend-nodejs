@@ -1,5 +1,3 @@
-const { use } = require('express/lib/application');
-const fs = require('fs');
 const path = require('path');
 const dataPath = path.join(__dirname, '../../users.json');
 const rateLimit = require('express-rate-limit')
@@ -7,15 +5,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt')
 const accessTokenKey = 'access-token'
 const refreshTokenKey = 'refresh-token'
-const multer  = require('multer')
-const sequelize = require('../../util/database')
 const User = require('../../models/users');
-const Registeration = require('../../models/registeration');
-const nodemailer = require("nodemailer");
-const { Op } = require('sequelize'); 
 
-
-//function to get users
+//Function to get users
 exports.getUser = async (req, res) => {
     try {
         const userId = req.params.id;
@@ -33,12 +25,13 @@ exports.getUser = async (req, res) => {
 
 exports.createAccountLimiter = rateLimit({
     windowMs: 5000, // 5 second
-    max: 1, // Limit to 1 request per windowMs
+    max: 10, // Limit to 1 request per windowMs
     message: 'Rate Limit Reached'
 });
 
 //function to create new user
 exports.createUser = async (req, res) => {
+    console.log("i am coming")
     try {
         const newUser = req.body;
         const hashedPassword = await bcrypt.hash(newUser.password, 10);
@@ -214,48 +207,3 @@ exports.sendAiResponse = async (req, res) => {
       res.status(500).send('An error occurred while processing the AI response.');
     }
 };
-
-
-
-
-
-
-const pdfPoppler = require('pdf-poppler');
-
-exports.convertFile = async (req, res) => {
-    try {
-        const userId = req.params.id;
-        const user = await Registeration.findByPk(userId);
-
-        if (!user) {
-            return res.send("User with this ID does not exist!");
-        }
-
-        // console.log(user.name)
-        const inputPath = path.join(__dirname, '../../', user.CV);
-        const outputPath = path.join(__dirname, '../../assets/converted');
-        const name = user.firstName + user.lastName;
-
-        const outputOptions = {
-            format: 'jpeg',      // Output image format (jpeg/png)
-            out_dir: outputPath, // Output directory
-            out_prefix: `output-${name}` // Output image prefix
-        };
-
-        const pages = 'all';    // Convert all pages
-
-        pdfPoppler.convert(inputPath, outputOptions, pages).then((resolve) => {
-            console.log('Image converted', resolve);
-            res.send('PDF converted to images successfully.');
-        }).catch((error) => {
-            console.error('Error converting PDF to images:', error);
-            res.status(500).send('An error occurred while converting PDF to images.');
-        });
-    } catch (error) {
-        console.error('Error in convertFile API:', error);
-        res.status(500).send('An error occurred in the convertFile API.');
-    }
-};
-
-
-

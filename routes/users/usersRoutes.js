@@ -4,8 +4,9 @@ const userController = require('../../controllers/users/usersContoller');
 const authentication = require('../../middleware/authentication');
 
 // Create user routes
+
 router.post('/create', userController.createAccountLimiter, userController.createUser);
-router.get('/getUser/:id', userController.getUser);
+router.get('/get-user/:id', userController.getUser);
 router.delete('/delete/:id', userController.deleteUser);
 router.put('/update/:id', userController.updateUser);
 router.post('/login/:email', userController.loginUser);
@@ -14,12 +15,7 @@ router.post('/login/:email', userController.loginUser);
 router.post('/profile', authentication.verifyAccessToken, userController.profileUser);
 router.post('/refresh', authentication.refreshTokens); // Route to refresh access token
 
-router.post('/sendAiResponse', userController.sendAiResponse);
-
-
-
-router.get('/convert-pdf/:id', userController.convertFile);
-// router.get('/convert-pdf-child/:id', userController.convertFileChild);
+router.post('/send-ai-response', userController.sendAiResponse);
 
 
 module.exports = router;
